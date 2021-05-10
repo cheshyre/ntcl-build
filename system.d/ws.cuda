@@ -1,0 +1,6 @@
+system = gcc
+modules = gcc openblas cuda
+compiler_suite = gcc
+use_blas = 1
+use_cuda = 1
+use_cublas = 1

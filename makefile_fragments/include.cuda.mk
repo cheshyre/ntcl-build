@@ -1,0 +1,3 @@
+CUDA_LIBS = -L${CUDA_ROOT}/lib64 -lcudart -lcuda
+NV_COMPUTE_LEVEL=compute_50
+NV_CODE_LEVEL=${NV_COMPUTE_LEVEL}

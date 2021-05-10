@@ -1,0 +1,8 @@
+HIP_COMPILER =  hipcc
+HIP_STDFLAGS =
+HIP_DEBUGFLAGS = ${HIP_STDFLAGS}
+HIP_PRODFLAGS = ${HIP_STDFLAGS} -O3
+HIP_AMDGPU_TARGET=gfx906,gfx908
+ROCBLAS_INCLUDE=${ROCBLAS_DIR}/include
+# HIP_INCLUDE=/opt/rocm/hip/include
+HIP_COMPFLAGS =-fno-gpu-rdc -fPIC -Wno-unused-command-line-argument --amdgpu-target=${HIP_AMDGPU_TARGET} -I${ROCBLAS_INCLUDE} -I${HIP_INCLUDE}

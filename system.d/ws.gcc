@@ -1,0 +1,3 @@
+system = gcc
+modules = gcc
+compiler_suite = gcc

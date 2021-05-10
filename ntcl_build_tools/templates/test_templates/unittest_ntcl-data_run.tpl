@@ -1,0 +1,1 @@
+    call ${module}_initialize()

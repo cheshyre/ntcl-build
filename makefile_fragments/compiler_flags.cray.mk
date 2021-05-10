@@ -1,0 +1,6 @@
+COMPILER = ftn
+CCOMPILER = cc
+modcmd = -J
+OPENMP_FLAGS =-O omp
+PROD_FLAGS = -O2
+DEBUG_FLAGS = -G 0 -g 

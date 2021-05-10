@@ -1,0 +1,4 @@
+system = gcc
+modules = openblas gcc
+compiler_suite = gcc
+use_blas=1
