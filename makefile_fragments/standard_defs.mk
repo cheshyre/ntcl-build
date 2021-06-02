@@ -14,8 +14,8 @@ CFLAGS     += $(external_include)
 NVFLAGS     += $(addprefix -I ,$(include_directory))
 NVFLAGS     += $(addprefix -I ,$(internal_include_dirs))
 
-HIPFLAGS     += $(addprefix -I ,$(include_directory))
-HIPFLAGS     += $(addprefix -I ,$(internal_include_dirs))
+HIP_AMD_FLAGS     += $(addprefix -I ,$(include_directory))
+HIP_AMD_FLAGS     += $(addprefix -I ,$(internal_include_dirs))
 
 vpath %.f90 $(SOURCE_DIR)
 vpath %.F90 $(SOURCE_DIR)

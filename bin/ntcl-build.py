@@ -5,7 +5,7 @@ import git
 import subprocess
 import glob
 
-systemd = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "system.d"))
+default_systemd = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "system.d/"))
 
 build = "ntcl-build"
 util = "ntcl-util"
@@ -13,18 +13,26 @@ data = "ntcl-data"
 tensor = "ntcl-tensor"
 algorithms = "ntcl-algorithms"
 examples = "ntcl-examples"
-url_base="git@gitlab.com:ntcl/"
+url_base="git@code.ornl.gov:ntcl-dev/"
 
 class System(object):
-    def __init__(this, name, args=None):
+    def __init__(this, name, path, args=None):
         this.name = name
         this.modules = []
         this.environment_variables = {}
+        this.required_env_variables = []
 
-        this.parse_system_file(os.path.join(systemd, this.name))
+        this.parse_system_file(os.path.join(path, this.name))
         if args is not None:
             this.define_variable("DEBUG", args.debug)
             this.define_variable("PROFILE", args.profile)
+
+    def check_for_required(this):
+
+        for key in this.required_env_variables:
+            if key not in os.environ.keys():
+                raise KeyError(f"Required environment variables are not defined: {this.get_required_env_variables()}")
+
 
     def parse_system_file(this, filename):
         with open(filename, 'r') as fh:
@@ -35,10 +43,12 @@ class System(object):
             try:
                 key, value = [x.strip() for x in line.split('=')]
                 if key == "modules": this.modules.extend(value.split())
+                if key == "required_env_variables": this.required_env_variables.extend(value.split())
                 else: this.environment_variables[key] = value
             except: continue
     def has_modules(this): return len(this.modules) > 0
     def get_modules(this): return ' '.join(this.modules)
+    def get_required_env_variables(this): return ' '.join(this.required_env_variables)
 
     def define_variable(this, name, define):
         if define: this.environment_variables[name] = "1"
@@ -46,17 +56,23 @@ class System(object):
     def __str__(this):
         s = f"System: {this.name}\n"
         if len(this.modules) > 0: s += '  modules: ' + this.get_modules() + '\n'
+        if len(this.required_env_variables) > 0: s += '  required_env_variables: ' + this.get_required_env_variables() + '\n'
         for key, value in this.environment_variables.items():
             s += f'  {key}: {value}\n'
 
         return s[:-1]
 
-def get_available_systems():
-    return [os.path.basename(x) for x in glob.glob(f"{systemd}/*")]
+    @staticmethod
+    def fromFile(filename, args):
+        path, name = os.path.split(os.path.abspath(filename))
+        return System(name, path, args)
 
-def list_available_systems():
+def get_available_systems(path):
+    return [os.path.basename(x) for x in glob.glob(f"{path}/*")]
+
+def list_available_systems(path):
     print("Available systems:")
-    for t in [System(x) for x in get_available_systems()]: print(t)
+    for t in [System(x, path) for x in get_available_systems(path)]: print(t)
 
 def create_directory_if_needed(directory):
     try:
@@ -140,48 +156,58 @@ class Environment(object):
 
     def create_environment_script(this, directory):
         s = f"cd {directory}\n"
-        if this.system.has_modules:
-            # TODO: Switch to implementation specific stuff.
-            s += 'source /etc/profile.d/modules.sh bash\n'
+        if this.system.has_modules():
             s += 'module load ' + this.system.get_modules() + '\n'
         for key, value in this.system.environment_variables.items():
-            s += f'export {key}={value}\n'
+            s += f'export {key}="{value}"\n'
 
         return s
 
 def create_environment(system, build_directory):
     return Environment(system, build_directory)
 
-def run_make(directory, env, target):
+def run_make(directory, env, target, dryrun):
     print(f"Running 'make {target}' in {directory}")
     cmd = env.create_environment_script(directory)
     cmd += f"make {target}\n"
 
     print(f"Command script:\n{cmd}")
-    subprocess.run(cmd, shell=True, executable='/bin/bash', env=env.build_env)
 
-def run_make_in_all_dirs(dirs, env, target):
-    for d in dirs: run_make(d, env, target)
+    if not dryrun:
+        subprocess.run(cmd, shell=True, executable='/bin/bash', env=env.build_env, check=True)
+
+def run_make_in_all_dirs(dirs, env, target, dryrun):
+    for d in dirs: run_make(d, env, target, dryrun)
 
 def prepare_and_compile_code(args):
 
-    system = System(args.system, args)
+    if args.systemfile is not None:
+        system = System.fromFile(args.systemfile, args)
+    else:
+        system = System(args.system, args.path, args)
     print(f"Compiling for system: {system}")
+
+    system.check_for_required()
 
     build_directory = os.path.realpath(args.build_directory)
     env = create_environment(system, build_directory)
     dirs = get_all_repository_directories(build_directory)
 
-    if args.clean: run_make_in_all_dirs(dirs, env, "clean")
-    run_make_in_all_dirs(dirs, env, "libraries")
-    if args.clean: run_make_in_all_dirs(dirs, env, "test")
-    run_make_in_all_dirs(dirs, env, "apps")
+    if args.clean: run_make_in_all_dirs(dirs, env, "clean", args.dryrun)
+    run_make_in_all_dirs(dirs, env, "libraries", args.dryrun)
+    if args.tests: run_make_in_all_dirs(dirs, env, "test", args.dryrun)
+    run_make_in_all_dirs(dirs, env, "apps", args.dryrun)
 
 if __name__ == "__main__":
     import argparse, sys
     parser = argparse.ArgumentParser()
-    parser.add_argument("-s", "--system", choices=get_available_systems(), default="default",
+    group = parser.add_mutually_exclusive_group()
+
+    group.add_argument("-s", "--system", default="default",
             type=str.lower, help="System to compile for.")
+    group.add_argument("-f", "--systemfile", help="Specify the system file to use.")
+
+    parser.add_argument("--path", default=default_systemd, help="Path to look for system files.")
     parser.add_argument("-b", "--build_directory", default=os.getcwd(), help="Directory to use for builds.")
     parser.add_argument("-r", "--release", default="main", help="Release to use for build.")
     parser.add_argument("-u", "--update", help="Update source.", action="store_true")
@@ -191,10 +217,11 @@ if __name__ == "__main__":
     parser.add_argument("-l", "--list_systems", help="List available systems and exits.", action="store_true")
     parser.add_argument("-d", "--debug", help="Compile with debug flags.", action="store_true")
     parser.add_argument("-p", "--profile", help="Compile with profile flags.", action="store_true")
+    parser.add_argument("-n", "--dryrun", help="Dry run, does nothing but print messages.", action="store_true")
     args = parser.parse_args()
 
     if args.list_systems:
-        list_available_systems()
+        list_available_systems(os.path.abspath(args.path))
         sys.exit(0)
 
     update_code(args)

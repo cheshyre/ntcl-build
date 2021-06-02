@@ -1,0 +1,6 @@
+system = gcc
+modules = gcc/9.2.0 rocm
+compiler_suite = gcc
+use_hip = 1
+HIP_PLATFORM = amd
+HIP_ROOT = ${HIP_PATH}

@@ -1,0 +1,1 @@
+ HIP_AMDGPU_TARGET=gfx906,gfx908

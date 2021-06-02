@@ -1,6 +1,7 @@
 COMPILER = gfortran
 CCOMPILER = gcc
 modcmd = -J
+ldcmd = -fuse-ld=
 STANDARD = -std=f2008ts
 STD_FLAGS = -fdiagnostics-color=always -Wall -Wextra
 GCC10_FFLAGS = -fallow-argument-mismatch

@@ -1,0 +1,4 @@
+system = default
+compiler_suite = gcc
+use_blas = 1
+required_env_variables = INCBLAS LIBBLAS

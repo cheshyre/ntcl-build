@@ -19,7 +19,8 @@ class MakefileBuilder(object):
             'hdf5'                          : '${INCHDF5}',
             'blas'                          : '${INCBLAS}',
             'cutensor'                      : '-I${CUTENSOR_ROOT}/include',
-            'magma'                         : '-I${MAGMA_ROOT}/include'
+            'magma'                         : '-I${MAGMA_ROOT}/include',
+            'rocblas'                       : '-I${ROCM_PATH}/rocblas/include'
             }
 
     known_internal_includes = {
@@ -42,7 +43,9 @@ class MakefileBuilder(object):
             'cublas'                        : '-L${CUDA_ROOT}/lib64 -lcublas',
             'magma'                         : '-L${MAGMA_ROOT}/lib -lmagma',
             'cutensor'                      : '-L${CUTENSOR_ROOT}/lib -lcutensor',
-            'cuda'                          : '${CUDA_LIBS} -lstdc++'
+            'cuda'                          : '-L${CUDA_ROOT}/lib64 -lcudart -lcuda -lstdc++',
+            'hip_amd'                       : '-L${HIP_PATH}/lib -lamdhip64 -lstdc++',
+            'rocblas'                       : '-L${ROCM_PATH}/rocblas/lib -lrocblas -ldl'
             }
 
 
@@ -84,23 +87,67 @@ class MakefileBuilder(object):
                 s += this.known_external_includes[inc] + ' '
         return s[:-1]
 
+    def get_optional(this, flag, deps):
+        s = ['']
+        s.append(f'ifdef {flag}')
+        dirs = []
+        for inc in deps:
+            if inc in this.known_includes:
+                dirs.append(this.known_includes[inc])
+        libs = []
+        for lib in deps:
+            if lib in this.known_libs: libs.append(this.known_libs[lib])
+
+        if len(dirs) > 0: s.append(f'external_include += {" ".join(dirs)}')
+        s.append(f'external_libraries += {" ".join(libs)}')
+        s.append('endif')
+        return s
+
+    def get_optional_for_hip(this, flag, deps):
+        idx = deps.index('hip')
+
+        deps[idx] = 'hip_amd'
+        s = ['']
+        dirs = []
+        for inc in deps:
+            if inc in this.known_includes:
+                dirs.append(this.known_includes[inc])
+        libs = []
+        for lib in deps:
+            if lib in this.known_libs: libs.append(this.known_libs[lib])
+
+        s.append(f'ifdef {flag}')
+        s.append('ifeq (${HIP_PLATFORM},amd)')
+        if len(dirs) > 0: s.append(f'external_include += {" ".join(dirs)}')
+        s.append(f'external_libraries += {" ".join(libs)}')
+        s.append('endif')
+        s.append('')
+
+        deps[idx] = 'cuda'
+        dirs = []
+        for inc in deps:
+            if inc in this.known_includes:
+                dirs.append(this.known_includes[inc])
+        libs = []
+        for lib in deps:
+            if lib in this.known_libs: libs.append(this.known_libs[lib])
+
+        s.append('ifeq (${HIP_PLATFORM},nvidia)')
+        if len(dirs) > 0: s.append(f'external_include += {" ".join(dirs)}')
+        s.append(f'external_libraries += {" ".join(libs)}')
+        s.append('endif')
+        s.append('endif')
+
+        deps[idx] = 'hip'
+        return s
+
     def get_optional_dependencies(this):
         if not this.info.dependencies: return ''
         lines = []
         for flag,deps in this.info.dependencies.items():
-            s = ['']
-            s.append(f'ifdef {flag}')
-            dirs = []
-            for inc in deps:
-                if inc in this.known_includes:
-                    dirs.append(this.known_includes[inc])
-            libs = []
-            for lib in deps:
-                if lib in this.known_libs: libs.append(this.known_libs[lib])
-
-            if len(dirs) > 0: s.append(f'external_include += {" ".join(dirs)}')
-            s.append(f'external_libraries += {" ".join(libs)}')
-            s.append('endif')
+            print(f"hip in deps: {'hip' in deps}")
+            if "hip" in deps: s = this.get_optional_for_hip(flag, deps)
+            else: s = this.get_optional(flag, deps)
             lines.extend(s)
         return '\n'.join(lines)
 

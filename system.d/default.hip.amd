@@ -1,0 +1,6 @@
+system = default
+compiler_suite = gcc
+use_hip = 1
+use_rocblas = 1
+HIP_PLATFORM = amd
+required_env_variables = HIP_AMDGPU_TARGET HIP_PATH ROCM_PATH

@@ -1,2 +1,3 @@
-system = gcc
+system = default
+compiler_suite = gcc
 
