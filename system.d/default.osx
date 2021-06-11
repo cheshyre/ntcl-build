@@ -1,7 +1,7 @@
 system = default
 compiler_suite = gcc
-AR := libtool
-ARFLAGS := -o
-ARLIBFLAGS := -o
+AR = libtool
+ARFLAGS = -o
+ARLIBFLAGS = -o
 
 
