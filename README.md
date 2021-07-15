@@ -34,6 +34,10 @@ This repository contains scripts and resources to build the NTCL library.
     ```
     bin/ntcl-build.py -l
     ```
+- Specify system using a system descriptor file with `-f` (for non-default systems):
+    ```
+    bin/ntcl-build.py -c -b /scratch/ntcl -f FILENAME
+    ```
 - Update source from upstream repository wth `-u` (Can be combined with compilation):
     ```
     bin/ntcl-build.py -u -b /scratch/ntcl

@@ -1,6 +1,9 @@
 ! Auto-generated -- DO NOT MODIFY
 program unittest
-    use :: util_api, only : selector
+    use :: util_api, only : &
+			selector, &
+			string
+
     use :: mpi_initializer_module, only : mpi_initializer
     use :: mpi_identity_module, only : mpi_identity
     use :: distributed_assert_module, only : distributed_assert
@@ -17,7 +20,7 @@ ${run_header}
 	mpi = mpi_initializer()
     mpi_id = mpi%get_mpi_identity_for_world()
     assertion = distributed_assert(mpi_id)
-    aselector = selector()
+    aselector = selector([string("long")])
 
 ${run_statements}
     call assertion%write_summary()

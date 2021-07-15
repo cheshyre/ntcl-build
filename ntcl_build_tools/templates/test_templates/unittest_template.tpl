@@ -2,7 +2,8 @@
 program unittest
     use :: util_api, only : &
             assert, &
-            selector
+            selector, &
+			string
 
 ${module_header}
     implicit none
@@ -12,7 +13,7 @@ ${module_header}
 
 ${run_header}
     assertion = assert()
-    aselector = selector()
+    aselector = selector([string("long")])
 
 ${run_statements}
     call assertion%write_summary()

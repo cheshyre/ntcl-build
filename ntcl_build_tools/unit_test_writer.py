@@ -29,6 +29,8 @@ class UnitTestBuilder(object):
         module = None
         if "ntcl-algorithms" in this.info.uses or this.info.name=="ntcl-algorithms":
             module = "algorithms"
+        elif "ntcl-tensor" in this.info.uses or this.info.name=="ntcl-tensor":
+            module = "tensor"
         elif "ntcl-data" in this.info.uses or this.info.name=="ntcl-data":
             module = "data"
 
@@ -126,6 +128,8 @@ class UnitTestBuilder(object):
         module = None
         if "ntcl-algorithms" in this.info.uses or this.info.name=="ntcl-algorithms":
             module = "algorithms"
+        elif "ntcl-tensor" in this.info.uses or this.info.name=="ntcl-tensor":
+            module = "tensor"
         elif "ntcl-data" in this.info.uses or this.info.name=="ntcl-data":
             module = "data"
 

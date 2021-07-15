@@ -58,7 +58,7 @@ class PackageTestBuilder(object):
         for t in info.regular_tests:
             s += this.create_regular_test_line(t) + '\n'
 
-        if len(info.long_tests) is not 0: s += '        ! The following tests will not be run when -long is specified.' + '\n'
+        if len(info.long_tests) is not 0: s += '        ! The following tests will not be run unless long is specified.' + '\n'
         for t in info.long_tests:
             s += this.create_long_test_line(t) + '\n'
 

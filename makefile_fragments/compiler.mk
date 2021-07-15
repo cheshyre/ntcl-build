@@ -32,6 +32,11 @@ ifeq ($(OPENMP),yes)
 	CFLAGS += ${OPENMP_FLAGS}
 endif
 
+ifdef extra_flags
+	FFLAGS += ${extra_flags}
+	CFLAGS += ${extra_flags}
+endif
+
 ifdef USE_LD
 	FFLAGS += ${ldcmd}${USE_LD}
 	CFLAGS += ${ldcmd}${USE_LD}

@@ -6,7 +6,7 @@ sources += $2
 headers += $(call extract-header-files,$2)
 $1: $(call source-to-object,$2)
 	$(AR) $(ARFLAGS) $(library_directory)/$$@ $$^
-	$(foreach f,$(call extract-header-files,$2), cp $f $(include_directory)/.)
+	$(foreach f,$(call extract-header-files,$2), cp $f $(include_directory)/.;)
 endef
 define make-testlibrary
 test_libraries += $1

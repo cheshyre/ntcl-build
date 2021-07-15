@@ -18,5 +18,5 @@ ifndef SED
 SED := sed
 endif
 
-finddep := python2 ${SCRIPTDIR}/find_dependencies_make.py
+finddep := python3 ${SCRIPTDIR}/find_dependencies_make.py
 
