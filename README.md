@@ -1,4 +1,7 @@
 # NTCL build tools
+
+> This is a fork of the [official NTCL repository](https://gitlab.com/ntcl/ntcl) being used for development of a C interface.
+
 This repository contains scripts and resources to build the NTCL library.
 
 ## Prerequisites
