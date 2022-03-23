@@ -41,6 +41,10 @@ clean:
 ifdef library_name
 	${RM} ${library_directory}/${library_name}
 endif
+ifdef library_name_full
+	${RM} ${library_directory}/${library_name_full}
+	${RM} ${library_directory}/${library_name_full}.mri
+endif
 
 %.o: %.f90
 	${XLF} $(modcmd)${include_directory} -c $< -o $@
