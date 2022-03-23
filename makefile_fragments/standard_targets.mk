@@ -11,6 +11,16 @@ libraries: $(libraries)
 ifdef library_name
 	${RM} ${library_directory}/${library_name}
 	$(AR) ${ARLIBFLAGS} $(library_directory)/$(library_name) $(patsubst %,lib/%, $(libraries))
+ifdef library_name_full
+	echo "create ${library_name_full}" > $(library_directory)/$(library_name_full).mri
+	for f in $(patsubst %,lib/%, $(libraries)); do \
+		echo "addlib $$f" >> $(library_directory)/$(library_name_full).mri; \
+	done
+	echo "save" >> $(library_directory)/$(library_name_full).mri
+	echo "end" >> $(library_directory)/$(library_name_full).mri
+	$(AR) -M <$(library_directory)/$(library_name_full).mri
+	${MV} $(library_name_full)  $(library_directory)/$(library_name_full)
+endif
 endif
 	for f in $(headers); do cp $$f $(include_directory); done
 
