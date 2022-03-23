@@ -13,7 +13,7 @@ data = "ntcl-data"
 tensor = "ntcl-tensor"
 algorithms = "ntcl-algorithms"
 examples = "ntcl-examples"
-url_base="git@gitlab.com:ntcl/"
+url_base="https://github.com/cheshyre/"
 
 class System(object):
     def __init__(this, name, path, args=None):
