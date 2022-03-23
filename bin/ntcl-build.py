@@ -13,6 +13,14 @@ data = "ntcl-data"
 tensor = "ntcl-tensor"
 algorithms = "ntcl-algorithms"
 examples = "ntcl-examples"
+part_lookup = {
+    "build": build,
+    "util": util,
+    "data": data,
+    "tensor": tensor,
+    "algorithms": algorithms,
+    "examples": examples,
+}
 url_base="https://github.com/cheshyre/"
 
 class System(object):
@@ -93,8 +101,13 @@ def get_repository_url(repository):
 def get_repository(directory, repository):
     return git.Repo(get_repository_directory(directory, repository))
 
-def get_all_repository_directories(directory):
-    repository_names = [util, data, tensor,  algorithms, examples]
+def get_all_repository_directories(directory, part=None):
+    if part is None:
+        repository_names = [util, data, tensor,  algorithms, examples]
+    elif part == "build":
+        repository_names = []
+    else:
+        repository_names = [part_lookup[part]]
     return [get_repository_directory(directory, x) for x in repository_names]
 
 def clone_repository(directory, repository):
@@ -117,8 +130,17 @@ def clone_repository_if_needed(directory, repository):
     print(f"Cloned repository {get_repository_url(repository)} into {directory}")
     return repo
 
-def clone_repositories_if_needed(directory):
-    repository_names = [util, data, tensor,  algorithms, examples, build]
+def clone_repositories_if_needed(directory, part=None):
+    if part is None:
+        repository_names = [util, data, tensor,  algorithms, examples, build]
+    else:
+        try:
+            repository_names = [part_lookup[part]]
+        except KeyError:
+            print(f"Error: \"{part}\" is not a valid NTCL subproject.", file=sys.stderr)
+            print("Valid NTCL subprojects:", file=sys.stderr)
+            print(", ".join([key for key in part_lookup]), file=sys.stderr)
+            sys.exit(1)
     repositories = []
     for r in repository_names:
         repositories.append(clone_repository_if_needed(directory, r))
@@ -144,7 +166,7 @@ def set_branch_and_update(repository, branch):
 
 def update_code(args):
     create_directory_if_needed(args.build_directory)
-    repos = clone_repositories_if_needed(args.build_directory)
+    repos = clone_repositories_if_needed(args.build_directory, args.part)
     if not args.update: return
 
     for r in repos: set_branch_and_update(r, args.release)
@@ -191,12 +213,28 @@ def prepare_and_compile_code(args):
 
     build_directory = os.path.realpath(args.build_directory)
     env = create_environment(system, build_directory)
-    dirs = get_all_repository_directories(build_directory)
+    dirs = get_all_repository_directories(build_directory, args.part)
 
     if args.clean: run_make_in_all_dirs(dirs, env, "clean", args.dryrun)
     run_make_in_all_dirs(dirs, env, "libraries", args.dryrun)
     if args.tests: run_make_in_all_dirs(dirs, env, "test", args.dryrun)
     run_make_in_all_dirs(dirs, env, "apps", args.dryrun)
+
+def prepare_and_clean_code(args):
+
+    if args.systemfile is not None:
+        system = System.fromFile(args.systemfile, args)
+    else:
+        system = System(args.system, args.path, args)
+    print(f"Compiling for system: {system}")
+
+    system.check_for_required()
+
+    build_directory = os.path.realpath(args.build_directory)
+    env = create_environment(system, build_directory)
+    dirs = get_all_repository_directories(build_directory, args.part)
+
+    run_make_in_all_dirs(dirs, env, "clean", args.dryrun)
 
 if __name__ == "__main__":
     import argparse, sys
@@ -218,6 +256,7 @@ if __name__ == "__main__":
     parser.add_argument("-d", "--debug", help="Compile with debug flags.", action="store_true")
     parser.add_argument("-p", "--profile", help="Compile with profile flags.", action="store_true")
     parser.add_argument("-n", "--dryrun", help="Dry run, does nothing but print messages.", action="store_true")
+    parser.add_argument("-x", "--part", default=None, help="Only run ntcl-build on specific part of NTCL.")
     args = parser.parse_args()
 
     if args.list_systems:
@@ -226,3 +265,4 @@ if __name__ == "__main__":
 
     update_code(args)
     if args.compile: prepare_and_compile_code(args)
+    elif args.clean: prepare_and_clean_code(args)
